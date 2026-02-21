@@ -414,6 +414,27 @@ textarea:focus {
     text-decoration: underline;
 }
 
+/* Mobile: make tooltip a fixed bottom bar */
+@media (max-width: 768px) {
+    .tooltip {
+        position: fixed;
+        bottom: 80px;
+        /* above mobile nav bar */
+        left: 50% !important;
+        top: auto !important;
+        transform: translateX(-50%);
+        border-radius: 999px;
+        padding: 0.75rem 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        white-space: nowrap;
+    }
+
+    .tooltip::after {
+        display: none;
+        /* no arrow needed for fixed bar */
+    }
+}
+
 /* Export View */
 #export-textarea {
     height: 60vh;
