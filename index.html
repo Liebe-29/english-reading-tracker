@@ -39,7 +39,13 @@
                     <p id="stat-words">0</p>
                 </div>
             </div>
-            <h2>Recent Articles</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2 style="margin: 0;">Recent Articles</h2>
+                <label
+                    style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); font-size: 0.875rem;">
+                    <input type="checkbox" id="hide-exported-toggle" class="export-checkbox"> Hide Checked
+                </label>
+            </div>
             <div id="article-list" class="article-grid">
                 <!-- Articles will be injected here -->
                 <p class="empty-state">No articles yet. Add one to get started!</p>
