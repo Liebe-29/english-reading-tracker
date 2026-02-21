@@ -40,6 +40,16 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => navigateTo('dashboard'));
     });
 
+    // --- Filter Toggle ---
+    const hideExportedToggle = document.getElementById('hide-exported-toggle');
+    if (hideExportedToggle) {
+        hideExportedToggle.checked = localStorage.getItem('readingTracker_hideExported') === 'true';
+        hideExportedToggle.addEventListener('change', (e) => {
+            localStorage.setItem('readingTracker_hideExported', e.target.checked);
+            renderDashboard();
+        });
+    }
+
     // --- Theme Toggle ---
     function toggleTheme() {
         const root = document.documentElement;
@@ -140,13 +150,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const grid = document.getElementById('article-list');
         grid.innerHTML = '';
+        const hideExported = document.getElementById('hide-exported-toggle')?.checked || false;
 
         if (articles.length === 0) {
             grid.innerHTML = '<p class="empty-state">No articles yet. Add one to get started!</p>';
             return;
         }
 
+        let visibleCount = 0;
         articles.forEach(article => {
+            if (hideExported && article.hasExportedWords) return;
+            visibleCount++;
+
             const date = new Date(article.dateAdded).toLocaleDateString();
             const card = document.createElement('div');
             card.className = 'article-card';
@@ -200,6 +215,10 @@ document.addEventListener('DOMContentLoaded', () => {
             card.appendChild(actionContainer);
             grid.appendChild(card);
         });
+
+        if (visibleCount === 0 && articles.length > 0) {
+            grid.innerHTML = '<p class="empty-state" style="grid-column: 1 / -1;">All your articles are checked. Uncheck "Hide Checked" to view them.</p>';
+        }
     }
 
     function deleteArticle(id) {
