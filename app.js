@@ -73,29 +73,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function parseArticle(text) {
         try {
-            // Extract metadata
-            const titleMatch = text.match(/\*\s*\*\*Title:\*\*\s*(.+)/i);
-            const levelMatch = text.match(/\*\s*\*\*Level:\*\*\s*(.+)/i);
-            const wordCountMatch = text.match(/\*\s*\*\*Word Count:\*\*\s*([\d,]+)/i) ||
-                text.match(/\*\s*\*\*Word Count:\*\*\s*(.+)/i) ||
-                text.match(/\*\s*\*\*Words:\*\*\s*([\d,]+)/i);
+            // Extract metadata - make ** optional and handle possible missing spaces
+            const titleMatch = text.match(/(?:\*|・)?\s*(?:\*\*)?Title:(?:\*\*)?\s*(.+)/i) || text.match(/Title:\s*(.+)/i);
+            const levelMatch = text.match(/(?:\*|・)?\s*(?:\*\*)?Level:(?:\*\*)?\s*(.+)/i) || text.match(/Level:\s*(.+)/i);
+            const wordCountMatch = text.match(/(?:\*|・)?\s*(?:\*\*)?Word Count:(?:\*\*)?\s*([\d,]+)/i) ||
+                text.match(/(?:\*|・)?\s*(?:\*\*)?Word Count:(?:\*\*)?\s*(.+)/i) ||
+                text.match(/(?:\*|・)?\s*(?:\*\*)?Words:(?:\*\*)?\s*([\d,]+)/i) ||
+                text.match(/Word Count:\s*([\d,]+)/i);
 
-            // Extract Story Block
-            const storyStartReg1 = /### 2\. Story \/ Article/i;
-            const storyStartReg2 = /### Story/i;
+            // Extract Story Block - be more flexible with the headers
+            const storyStartReg1 = /(?:###)?\s*2\.\s*Story\s*\/?\s*Article/i;
+            const storyStartReg2 = /(?:###)?\s*Story/i;
             let startIndex = -1;
-            const startMatch = text.match(storyStartReg1) || text.match(storyStartReg2);
-            if (startMatch) startIndex = startMatch.index + startMatch[0].length;
-            else startIndex = text.indexOf('---', text.indexOf('Word Count')) + 3; // Fallback
 
-            let endIndex = text.search(/### 3\. Key Vocabulary|### Key Vocabulary/i);
+            const startMatch = text.match(storyStartReg1) || text.match(storyStartReg2);
+            if (startMatch) {
+                startIndex = startMatch.index + startMatch[0].length;
+            } else {
+                // Fallback: look for the end of the Word Count line
+                const wcIndex = text.indexOf('Word Count:');
+                if (wcIndex !== -1) {
+                    const nextNewLine = text.indexOf('\n', wcIndex);
+                    // Skip over any markdown horizontal rules if present
+                    const possibleDivider = text.indexOf('---', nextNewLine);
+                    if (possibleDivider !== -1 && possibleDivider - nextNewLine < 10) {
+                        startIndex = possibleDivider + 3;
+                    } else {
+                        startIndex = nextNewLine;
+                    }
+                }
+            }
+
+            let endIndex = text.search(/(?:###)?\s*3\.\s*Key Vocabulary|(?:###)?\s*Key Vocabulary/i);
             if (endIndex === -1) endIndex = text.length;
 
-            if (startIndex === -1 || !titleMatch) return null;
+            if (startIndex === -1 || !titleMatch) {
+                console.log("Failed to parse. startIndex:", startIndex, "titleMatch:", titleMatch);
+                return null;
+            }
 
             let storyRaw = text.substring(startIndex, endIndex).trim();
-            // Remove lingering --- if any
-            storyRaw = storyRaw.replace(/^---/g, '').trim();
+            // Remove lingering --- or numbers at the beginning
+            storyRaw = storyRaw.replace(/^---+/g, '').trim();
 
             return {
                 id: Date.now().toString(),
