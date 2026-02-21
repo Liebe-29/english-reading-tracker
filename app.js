@@ -202,17 +202,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const tooltip = document.getElementById('selection-tooltip');
     let currentSelection = { text: '', sentence: '' };
 
-    readerBody.addEventListener('mouseup', (e) => {
-        setTimeout(() => handleSelection(e), 10);
-    });
+    function handleSelectionEvent() {
+        setTimeout(() => handleSelection(), 100);
+    }
 
-    document.addEventListener('mousedown', (e) => {
-        if (!e.target.closest('#selection-tooltip')) {
-            tooltip.classList.add('hidden');
+    // Support both mouse and touch
+    readerBody.addEventListener('mouseup', handleSelectionEvent);
+    readerBody.addEventListener('touchend', handleSelectionEvent);
+
+    // Also listen to selectionchange on document to catch native mobile selection handles
+    document.addEventListener('selectionchange', () => {
+        // Only handle if we are currently on the reader view
+        if (document.getElementById('view-reader').classList.contains('active')) {
+            handleSelectionEvent();
         }
     });
 
-    function handleSelection(e) {
+    document.addEventListener('mousedown', closeTooltip);
+    document.addEventListener('touchstart', closeTooltip);
+
+    function closeTooltip(e) {
+        if (!e.target.closest('#selection-tooltip') && e.target.id !== 'save-vocab-btn') {
+            tooltip.classList.add('hidden');
+        }
+    }
+
+    function handleSelection() {
         const selection = window.getSelection();
         const selectedText = selection.toString().trim();
 
@@ -236,13 +251,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const range = selection.getRangeAt(0);
             const rect = range.getBoundingClientRect();
 
-            // Adjust for scrolling
-            const scrollX = window.scrollX || document.documentElement.scrollLeft;
-            const scrollY = window.scrollY || document.documentElement.scrollTop;
+            // On mobile, rect might be 0,0 if selection is shifting. Check for width.
+            if (rect.width > 0) {
+                // Adjust for scrolling
+                const scrollX = window.scrollX || document.documentElement.scrollLeft;
+                const scrollY = window.scrollY || document.documentElement.scrollTop;
 
-            tooltip.style.left = `${rect.left + scrollX + (rect.width / 2)}px`;
-            tooltip.style.top = `${rect.top + scrollY - 5}px`;
-            tooltip.classList.remove('hidden');
+                tooltip.style.left = `${rect.left + scrollX + (rect.width / 2)}px`;
+                // Position above the selection
+                tooltip.style.top = `${rect.top + scrollY - 35}px`;
+                tooltip.classList.remove('hidden');
+            }
         } else {
             tooltip.classList.add('hidden');
         }
