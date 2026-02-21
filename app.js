@@ -41,12 +41,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Theme Toggle ---
-    const themeBtn = document.getElementById('theme-btn');
-    themeBtn.addEventListener('click', () => {
+    function toggleTheme() {
         const root = document.documentElement;
         const currentTheme = root.getAttribute('data-theme');
         root.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
-    });
+    }
+
+    const themeBtn = document.getElementById('theme-btn');
+    if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+
+    const themeBtnSettings = document.getElementById('theme-btn-settings');
+    if (themeBtnSettings) themeBtnSettings.addEventListener('click', toggleTheme);
 
     // --- Parsing Logic ---
     const addArticleForm = document.getElementById('add-article-form');
