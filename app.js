@@ -103,7 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 level: levelMatch ? levelMatch[1].trim() : 'Unknown',
                 wordCount: wordCountMatch ? parseInt(wordCountMatch[1].replace(/,/g, ''), 10) : 0,
                 content: storyRaw,
-                dateAdded: new Date().toISOString()
+                dateAdded: new Date().toISOString(),
+                hasExportedWords: false // New property to track if words were checked/exported
             };
         } catch (e) {
             console.error('Parsing error:', e);
@@ -144,6 +145,23 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             contentWrapper.addEventListener('click', () => openReader(article.id));
 
+            // Actions container (Row for Checkbox + Delete)
+            const actionContainer = document.createElement('div');
+            actionContainer.className = 'article-actions';
+
+            // "Words Exported" Checkbox
+            const checkboxLabel = document.createElement('label');
+            checkboxLabel.className = 'export-checkbox-label';
+            checkboxLabel.innerHTML = `<input type="checkbox" class="export-checkbox" ${article.hasExportedWords ? 'checked' : ''}> Checked Words`;
+
+            const checkbox = checkboxLabel.querySelector('input');
+            checkbox.addEventListener('change', (e) => {
+                e.stopPropagation();
+                article.hasExportedWords = e.target.checked;
+                saveState();
+                // Optional: visual styling based on checked state could be added via CSS
+            });
+
             // Delete button
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'btn text-btn delete-article-btn';
@@ -156,8 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            const actionContainer = document.createElement('div');
-            actionContainer.className = 'article-actions';
+            actionContainer.appendChild(checkboxLabel);
             actionContainer.appendChild(deleteBtn);
 
             card.appendChild(contentWrapper);
@@ -203,16 +220,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSelection = { text: '', sentence: '' };
 
     function handleSelectionEvent() {
-        setTimeout(() => handleSelection(), 100);
+        // Debounce slightly to allow the native selection to settle
+        setTimeout(() => handleSelection(), 300);
     }
 
     // Support both mouse and touch
     readerBody.addEventListener('mouseup', handleSelectionEvent);
     readerBody.addEventListener('touchend', handleSelectionEvent);
 
-    // Also listen to selectionchange on document to catch native mobile selection handles
+    // Safari/Firefox mobile often relies heavily on selectionchange on the document
     document.addEventListener('selectionchange', () => {
-        // Only handle if we are currently on the reader view
         if (document.getElementById('view-reader').classList.contains('active')) {
             handleSelectionEvent();
         }
@@ -231,14 +248,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const selection = window.getSelection();
         const selectedText = selection.toString().trim();
 
-        if (selectedText && selectedText.length > 0) {
+        if (selectedText && selectedText.length > 0 && selectedText.length < 100) { // Limit length to avoid whole-paragraph selections
             // Find the sentence containing this word
             const node = selection.anchorNode;
             if (!node) return;
-            const paragraph = node.parentElement.closest('p');
+            // On some mobile browsers, the node might be the text node itself, so we need parentElement
+            const element = node.nodeType === 3 ? node.parentElement : node;
+            const paragraph = element.closest('p');
+
             if (!paragraph) return;
 
             const fullText = paragraph.textContent;
+            // Simple sentence splitter
             const sentences = fullText.match(/[^.!?]+[.!?]+/g) || [fullText];
 
             let targetSentence = sentences.find(s => s.includes(selectedText));
@@ -248,23 +269,36 @@ document.addEventListener('DOMContentLoaded', () => {
             currentSelection.sentence = targetSentence.trim();
 
             // Position tooltip
-            const range = selection.getRangeAt(0);
-            const rect = range.getBoundingClientRect();
+            try {
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    const rect = range.getBoundingClientRect();
 
-            // On mobile, rect might be 0,0 if selection is shifting. Check for width.
-            if (rect.width > 0) {
-                // Adjust for scrolling
-                const scrollX = window.scrollX || document.documentElement.scrollLeft;
-                const scrollY = window.scrollY || document.documentElement.scrollTop;
+                    // Ensure the selection has actual width before showing tooltip (prevents 0,0 glitch on Safari)
+                    if (rect.width > 0 || rect.height > 0) {
+                        const scrollX = window.scrollX || document.documentElement.scrollLeft;
+                        const scrollY = window.scrollY || document.documentElement.scrollTop;
 
-                tooltip.style.left = `${rect.left + scrollX + (rect.width / 2)}px`;
-                // Position above the selection
-                tooltip.style.top = `${rect.top + scrollY - 35}px`;
-                tooltip.classList.remove('hidden');
+                        // Safari calculates bounding rects slightly differently, safe fallback needed
+                        let topPos = rect.top + scrollY - 45; // slightly higher
+                        let leftPos = rect.left + scrollX + (rect.width / 2);
+
+                        // Prevent going off top of screen
+                        if (topPos < scrollY) topPos = rect.bottom + scrollY + 10;
+
+                        tooltip.style.left = `${leftPos}px`;
+                        tooltip.style.top = `${topPos}px`;
+                        tooltip.classList.remove('hidden');
+                        return; // Successfully showed tooltip
+                    }
+                }
+            } catch (e) {
+                console.log("Error calculating selection rect, falling back.", e);
             }
-        } else {
-            tooltip.classList.add('hidden');
         }
+
+        // If we reach here, either text is empty, too long, or bounding rect failed
+        tooltip.classList.add('hidden');
     }
 
     document.getElementById('save-vocab-btn').addEventListener('click', () => {
