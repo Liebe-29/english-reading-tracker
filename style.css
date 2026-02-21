@@ -289,9 +289,17 @@ p {
 
 
 /* Add Article */
+#add-article-form {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 180px);
+    /* Fill available height minus header */
+}
+
 textarea {
     width: 100%;
-    height: 400px;
+    flex-grow: 1;
+    min-height: 200px;
     padding: 1rem;
     border-radius: 0.5rem;
     border: 1px solid var(--border-color);
@@ -299,14 +307,25 @@ textarea {
     color: var(--text-primary);
     font-family: monospace;
     font-size: 0.9rem;
-    resize: vertical;
-    margin-bottom: 1rem;
+    resize: none;
+    /* Let flex handle the height */
+    margin-bottom: 0;
+    /* Removing margin since form actions has padding */
 }
 
 textarea:focus {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+.form-actions {
+    position: sticky;
+    bottom: 0px;
+    background-color: var(--bg-primary);
+    padding: 1rem 0;
+    z-index: 10;
+    margin-top: auto;
 }
 
 /* Reader */
