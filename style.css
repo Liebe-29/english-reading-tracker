@@ -253,10 +253,28 @@ p {
 
 .article-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    /* Space out checkbox and delete btn */
+    align-items: center;
     border-top: 1px solid var(--border-color);
     padding-top: 0.5rem;
     margin-top: auto;
+}
+
+.export-checkbox-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.export-checkbox {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--accent-color);
+    cursor: pointer;
 }
 
 .delete-article-btn {
