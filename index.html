@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Reading Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+</head>
+
+<body>
+    <nav class="sidebar">
+        <div class="logo">Reader PWA</div>
+        <ul class="nav-links">
+            <li><a href="#" data-view="dashboard" class="active">Dashboard</a></li>
+            <li><a href="#" data-view="add-article">Add Article</a></li>
+            <li><a href="#" data-view="export">Export List</a></li>
+            <li><a href="#" data-view="settings">Settings & Backup</a></li>
+        </ul>
+        <div class="theme-toggle">
+            <button id="theme-btn" class="btn secondary" style="width: 100%;">Toggle Theme</button>
+        </div>
+    </nav>
+    <main class="content">
+        <!-- Dashboard View -->
+        <section id="view-dashboard" class="view active">
+            <header>
+                <h1>My Reading Dashboard</h1>
+            </header>
+            <div class="stats-container">
+                <div class="stat-card">
+                    <h3>Articles Read</h3>
+                    <p id="stat-articles">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Words</h3>
+                    <p id="stat-words">0</p>
+                </div>
+            </div>
+            <h2>Recent Articles</h2>
+            <div id="article-list" class="article-grid">
+                <!-- Articles will be injected here -->
+                <p class="empty-state">No articles yet. Add one to get started!</p>
+            </div>
+        </section>
+
+        <!-- Add Article View -->
+        <section id="view-add-article" class="view">
+            <header>
+                <h1>Add New Article</h1>
+                <p>Paste the output from Gemini here.</p>
+            </header>
+            <form id="add-article-form">
+                <textarea id="article-input"
+                    placeholder="Paste Gemini markdown here... (e.g. * **Title:** The Sweet Mistake)"
+                    required></textarea>
+                <div class="form-actions">
+                    <button type="submit" class="btn primary">Parse & Save</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Reader View (Hidden by default, shown when reading) -->
+        <section id="view-reader" class="view">
+            <header class="reader-header">
+                <button id="back-to-dashboard" class="btn text-btn" data-view="dashboard">← Back to Dashboard</button>
+                <div class="article-meta">
+                    <span id="reader-level" class="badge">B1</span>
+                    <span id="reader-words" class="badge">285 words</span>
+                </div>
+            </header>
+            <article class="reader-content">
+                <h1 id="reader-title">Title Loading...</h1>
+                <div id="reader-body"></div>
+            </article>
+            <div id="selection-tooltip" class="tooltip hidden">
+                <button id="save-vocab-btn">Save Sentence</button>
+            </div>
+        </section>
+
+        <!-- Export View -->
+        <section id="view-export" class="view">
+            <header>
+                <h1>Vocabulary Export List</h1>
+                <p>Sentences ready for Anki card generation.</p>
+            </header>
+            <div class="export-actions">
+                <button id="copy-export-btn" class="btn primary">Copy to Clipboard</button>
+                <button id="clear-export-btn" class="btn danger">Clear List</button>
+            </div>
+            <div id="export-list-container">
+                <textarea id="export-textarea" readonly placeholder="Saved sentences will appear here..."></textarea>
+            </div>
+        </section>
+
+        <!-- Settings / Backup View -->
+        <section id="view-settings" class="view">
+            <header>
+                <h1>Settings & Backup</h1>
+                <p>Manage your app data across devices.</p>
+            </header>
+
+            <div class="stat-card" style="margin-bottom: 2rem;">
+                <h3>Data Export</h3>
+                <p style="font-size: 1rem; font-weight: normal; color: var(--text-secondary); margin-bottom: 1rem;">
+                    Your data is stored locally in this browser. To view your articles on another device (like your
+                    phone) or browser, export your data to a file.
+                </p>
+                <button id="backup-export-btn" class="btn primary">Download Backup File (.json)</button>
+            </div>
+
+            <div class="stat-card">
+                <h3>Data Import</h3>
+                <p style="font-size: 1rem; font-weight: normal; color: var(--text-secondary); margin-bottom: 1rem;">
+                    Load data from a backup file. <strong>Warning:</strong> This will replace your current articles and
+                    reading list.
+                </p>
+                <input type="file" id="backup-import-file" accept=".json" style="margin-bottom: 1rem; display: block;">
+                <button id="backup-import-btn" class="btn secondary">Import Data</button>
+            </div>
+        </section>
+    </main>
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => console.log('SW registered:', registration.scope))
+                    .catch(error => console.log('SW registration failed:', error));
+            });
+        }
+    </script>
+</body>
+
+</html>

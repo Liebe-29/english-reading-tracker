@@ -1,0 +1,16 @@
+{
+    "name": "English Reading Tracker",
+    "short_name": "ReadingTracker",
+    "start_url": "index.html",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4f46e5",
+    "description": "Progressive Web App to track English reading and export sentences for Anki.",
+    "icons": [
+        {
+            "src": "favicon.ico",
+            "sizes": "64x64",
+            "type": "image/x-icon"
+        }
+    ]
+}
