@@ -257,9 +257,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const tooltip = document.getElementById('selection-tooltip');
     let currentSelection = { text: '', sentence: '' };
 
-    function handleSelectionEvent() {
-        // Debounce slightly to allow the native selection to settle
-        setTimeout(() => handleSelection(), 300);
+    function handleSelectionEvent(e) {
+        // Pass the event so we can potentially use touch/mouse coordinates
+        setTimeout(() => handleSelection(e), 300);
     }
 
     // Support both mouse and touch
@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function handleSelection() {
+    function handleSelection(e) {
         const selection = window.getSelection();
         const selectedText = selection.toString().trim();
 
@@ -312,17 +312,34 @@ document.addEventListener('DOMContentLoaded', () => {
                     const range = selection.getRangeAt(0);
                     const rect = range.getBoundingClientRect();
 
-                    // Ensure the selection has actual width before showing tooltip (prevents 0,0 glitch on Safari)
                     if (rect.width > 0 || rect.height > 0) {
-                        const scrollX = window.scrollX || document.documentElement.scrollLeft;
-                        const scrollY = window.scrollY || document.documentElement.scrollTop;
+                        // Crux of the fix: iOS/Safari getBoundingClientRect is relative to the *viewport*.
+                        // window.scrollY represents how far down we've scrolled.
+                        // So absolute top = rect.top + window.scrollY
+                        const scrollX = window.scrollX || window.pageXOffset;
+                        const scrollY = window.scrollY || window.pageYOffset;
 
-                        // Safari calculates bounding rects slightly differently, safe fallback needed
-                        let topPos = rect.top + scrollY - 45; // slightly higher
+                        // Position vertically just above the selection box
+                        let topPos = rect.top + scrollY - 45;
+
+                        // Center horizontally
                         let leftPos = rect.left + scrollX + (rect.width / 2);
 
+                        // Fallbacks if rect values are wonky but we have an event
+                        if (e && (e.touches || Math.abs(topPos) > 10000)) {
+                            if (e.touches && e.touches.length > 0) {
+                                topPos = e.touches[0].pageY - 60;
+                                leftPos = e.touches[0].pageX;
+                            } else if (e.pageY) {
+                                topPos = e.pageY - 60;
+                                leftPos = e.pageX;
+                            }
+                        }
+
                         // Prevent going off top of screen
-                        if (topPos < scrollY) topPos = rect.bottom + scrollY + 10;
+                        if (topPos < scrollY + 10) {
+                            topPos = rect.bottom + scrollY + 10;
+                        }
 
                         tooltip.style.left = `${leftPos}px`;
                         tooltip.style.top = `${topPos}px`;
@@ -330,8 +347,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         return; // Successfully showed tooltip
                     }
                 }
-            } catch (e) {
-                console.log("Error calculating selection rect, falling back.", e);
+            } catch (err) {
+                console.log("Error calculating selection rect, falling back.", err);
             }
         }
 
