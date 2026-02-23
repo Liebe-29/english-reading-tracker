@@ -249,6 +249,21 @@ document.addEventListener('DOMContentLoaded', () => {
             .join('');
 
         document.getElementById('reader-body').innerHTML = htmlContent;
+
+        // Setup Reader Checkbox
+        const readerCheckbox = document.getElementById('reader-export-checkbox');
+        if (readerCheckbox) {
+            readerCheckbox.checked = article.hasExportedWords;
+            // Remove old listener to avoid duplicates if reader is opened multiple times
+            const newCheckbox = readerCheckbox.cloneNode(true);
+            readerCheckbox.parentNode.replaceChild(newCheckbox, readerCheckbox);
+
+            newCheckbox.addEventListener('change', (e) => {
+                article.hasExportedWords = e.target.checked;
+                saveState();
+            });
+        }
+
         navigateTo('reader');
     }
 
